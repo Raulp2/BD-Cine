@@ -22,6 +22,7 @@ HEADERS = {
 
 def obtener_html(url: str) -> str:
     res = requests.get(url, headers=HEADERS)
+    res.encoding='utf-8'
     return res.text
 
 html = obtener_html(filmaffinity)
@@ -33,7 +34,7 @@ soup = BeautifulSoup(html, 'lxml')
 title_tag = soup.find('h1', id='main-title')
 if title_tag:
     titulo_pelicula = title_tag.find('span', itemprop='name').text.strip()
-    print("El título de la película es:", titulo_pelicula)
+    print("El título de la película es:", titulo_pelicula)º
     try:
         sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO) VALUES (?)"
         cursor.execute(sql_insert, (titulo_pelicula,))
