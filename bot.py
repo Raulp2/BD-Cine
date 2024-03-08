@@ -29,12 +29,13 @@ html = obtener_html(filmaffinity)
 
 soup = BeautifulSoup(html, 'lxml')
 
-#MANEJO DE DATOS Y EXPORTACION A BASE DE DATOS
+# MANEJO DE DATOS Y EXPORTACION A BASE DE DATOS
 
+# Titulo de la pelicula.
 title_tag = soup.find('h1', id='main-title')
 if title_tag:
     titulo_pelicula = title_tag.find('span', itemprop='name').text.strip()
-    print("El título de la película es:", titulo_pelicula)º
+    print("El título de la película es:", titulo_pelicula)
     try:
         sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO) VALUES (?)"
         cursor.execute(sql_insert, (titulo_pelicula,))
@@ -42,6 +43,20 @@ if title_tag:
         print("Error al insertar en la base de datos: ",e)
 else:
     print("Título de la película no encontrado.")
+# Director y actores de la pelicula.
+director_container = soup.find('dd', class_='directors')
+if director_container:
+    directores_links = director_container.find_all('a')
+    nombre_directores = [link.text.strip() for link in directores_links]
+    nombre_directores_SQL = "D: " + ", ".join(nombre_directores)
+    print(nombre_directores)
+    try:
+        sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (DIRECTOR) VALUES (?)"
+        cursor.execute(sql_insert, (nombre_directores_SQL,))
+    except pyodbc.Error as e:
+        print("Error al insertar el director la base de datos: ",e)
+else:
+    print("Director no encontrado.")
 
 # Confirmar cambios
 conn.commit()
