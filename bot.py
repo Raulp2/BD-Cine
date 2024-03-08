@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 
 filmaffinity = "https://www.filmaffinity.com/es/film932361.html"
 
@@ -9,20 +10,19 @@ HEADERS = {
     "Accept": "*/*"
 }
 
-# Donde guardamos el contenido 
-
-def guardar(contenido: str, nombre: str ="res.html") -> None:
-    with open(nombre, "w") as f:
-        f.write(contenido)
-
-# Obtenci�n y guardado del html del enlace
 
 def obtener_html(url: str) -> str:
     res = requests.get(url, headers=HEADERS)
     return res.text
-    
 
 html = obtener_html(filmaffinity)
-guardar(html)
 
+soup = BeautifulSoup(html, 'lxml')
+
+title_tag = soup.find('h1', id='main-title')
+if title_tag:
+    movie_title = title_tag.find('span', itemprop='name').text.strip()
+    print("El título de la película es:", movie_title)
+else:
+    print("Título de la película no encontrado.")
 
