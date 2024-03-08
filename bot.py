@@ -11,7 +11,6 @@ conn_str = (r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
 conn = pyodbc.connect(conn_str)
 cursor = conn.cursor()
 
-
 #OBTENER DATOS HTML
 filmaffinity = "https://www.filmaffinity.com/es/film932361.html"
 
@@ -35,12 +34,16 @@ title_tag = soup.find('h1', id='main-title')
 if title_tag:
     titulo_pelicula = title_tag.find('span', itemprop='name').text.strip()
     print("El título de la película es:", titulo_pelicula)
+    try:
+        sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO) VALUES (?)"
+        cursor.execute(sql_insert, (titulo_pelicula,))
+    except pyodbc.Error as e:
+        print("Error al insertar en la base de datos: ",e)
 else:
     print("Título de la película no encontrado.")
 
 # Confirmar cambios
 conn.commit()
-
 # Cerrar conexión
 cursor.close()
 conn.close()
