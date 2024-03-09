@@ -8,8 +8,8 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 
-filmaffinity = "https://www.filmaffinity.com/es/film180929.html"
-icca = "https://sede.mcu.gob.es/CatalogoICAA/en-us/Peliculas/Detalle?Pelicula=73323"
+filmaffinity = "https://www.filmaffinity.com/es/film635719.html"
+icca = "https://sede.mcu.gob.es/CatalogoICAA/en-us/Peliculas/Detalle?Pelicula=2224"
 
 # CONECTARSE A LA BASE DE DATOS
 # Ruta al archivo de la base de datos Access
@@ -108,7 +108,7 @@ if fecha_estreno_container:
     fecha_estreno = fecha_estreno_container.find_next(
         'label', class_='custom-simple-label').text
 else:
-    fecha_estreno = ""
+    fecha_estreno = "01/01/1001"
     print("pendiente de fecha de estreno")
 
 
@@ -156,7 +156,7 @@ if calificacion_container:
     if "General Audiences" in texto_calificacion:
         calificacion = "TOL"
 else:
-    calificacion = "Pendiente"
+    calificacion = "PENDIENTE"
     print("Error en la calificacion o pendiente")
 
 # Genero
@@ -185,7 +185,7 @@ if recaudacion_container:
     recaudacion = recaudacion_container.find_next(
         'label', class_='custom-simple-label').text
 else:
-    recaudacion = "0"
+    recaudacion = "0 €"
     print("Error en la recauacion o pendiente de estreno")
 print(recaudacion)
 # Espectadores
@@ -195,7 +195,7 @@ if espectadores_container:
     espectadores = espectadores_container.find_next(
         'label', class_='custom-simple-label').text
 else:
-    espectadores = "0"
+    espectadores = 0
     print("Error en los espectadores o pendiente de estreno")
 
 # ExpedienteICCA
