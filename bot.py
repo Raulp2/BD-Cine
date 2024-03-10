@@ -8,8 +8,8 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 
-filmaffinity = "AQUÍ VA EL ENLACE DE https://www.filmaffinity.com/"
-icca = "AQUÍ VA EL ENLACE DE  https://sede.mcu.gob.es/CatalogoICAA/"
+filmaffinity = "https://www.filmaffinity.com/es/film139117.html"
+icca = "https://sede.mcu.gob.es/CatalogoICAA/Peliculas/Detalle?Pelicula=218023"
 
 # CONECTARSE A LA BASE DE DATOS
 # Ruta al archivo de la base de datos Access
@@ -141,10 +141,12 @@ if duracion_container:
     duracion_total = duracion_container.find_next(
         'label', class_='custom-simple-label').text
     duracion = ''.join(filter(str.isdigit, duracion_total))
+    if len(duracion) == 0:
+        duracion = "0"
 else:
-    duracion = 0
+    duracion = "1"
     print("Error en la duración o pendiente")
-
+print(duracion)
 # Calificación
 calificacion_container = soupIcca.find(
     'label', class_='mcu-text-details-text-b', string="Film Rating")
