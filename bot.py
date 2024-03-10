@@ -7,11 +7,12 @@ import pyodbc
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-#URLs de las paginas web
-FILMAFFINITY = "https://www.filmaffinity.com/es/film139117.html"
-ICCA = "https://sede.mcu.gob.es/CatalogoICAA/Peliculas/Detalle?Pelicula=218023"
 
-# conexion a base de datos
+#URLs de las paginas web
+FILMAFFINITY = "AQUÍ VA EL ENLACE DE https://www.filmaffinity.com/"
+ICCA = "AQUÍ VA EL ENLACE DE  https://sede.mcu.gob.es/CatalogoICAA/"
+
+# Conexion a base de datos
 DB_PATH = r'C:\WorkSpace\ImpDataBDCine\BD.mdb'
 CONN_STR = (r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'r'DBQ=' + DB_PATH + ';')
 # Header para parecer un navegador web
@@ -35,17 +36,25 @@ session = configurar_sesion_ssl()
 
 # Obtener HTML de filmaffinity
 def obtener_htmlFa(url: str) -> str:
-    res = requests.get(url, headers=HEADERS)
-    res.encoding = 'utf-8'
-    return res.text
-htmlFa = obtener_htmlFa(FILMAFFINITY)
+    try:
+        res = requests.get(url, headers=HEADERS)
+        res.encoding = 'utf-8'
+        return res.text
+    except requests.RequestException as e:
+        print(f"Error al obtener el hmtl de {url}:{e}")
+        return None
+
 
 # Obtener HTML Icca
 def obtener_htmlIcca(url: str) -> str:
-    res = session.get(url, headers=HEADERS, verify=False)
-    res.encoding = 'utf-8'
-    return res.text
-htmlIcca = obtener_htmlIcca(ICCA)
+    try:
+        res = session.get(url, headers=HEADERS, verify=False)
+        res.encoding = 'utf-8'
+        return res.text
+    except requests.RequestException as e:
+        print(f"Error al obtener el hmtl de {url}:{e}")
+        return None 
+
 
 #Formatear los datos de recaudación y espectadores para que no haya errores en la base de datos
 def formatear_numero(cantidad):
@@ -207,27 +216,30 @@ def parsear_Icaa(htmlIcca):
 
     return titulo_icaa, fecha_estreno, duracion, calificacion, recaudacion, espectadores, expIcaa
 
-
-
-titulo_pelicula, directores_actores, pais, genero, nota = parsear_filmaffinity(htmlFa)
-titulo_icaa, fecha_estreno, duracion, calificacion, recaudacion, espectadores, expIcaa = parsear_Icaa(htmlIcca)
-
-print("Titulo FA: " + titulo_pelicula)
-print("Titulo Icaa: "+ titulo_icaa)
-print("Codigo Icaa: " + expIcaa)
 # INSERCION EN LA BASE DE DATOS
+def main():
+    htmlFa = obtener_htmlFa(FILMAFFINITY)
+    htmlIcca = obtener_htmlIcca(ICCA)
+    
+    if htmlFa and htmlIcca:
+        titulo_pelicula, directores_actores, pais, genero, nota = parsear_filmaffinity(htmlFa)
+        titulo_icaa, fecha_estreno, duracion, calificacion, recaudacion, espectadores, expIcaa = parsear_Icaa(htmlIcca)
 
-conn = pyodbc.connect(CONN_STR)
-cursor = conn.cursor()
-try:
-    sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO, DIRECTOR, PAIS, DURACION, CALIFICACION, Genero, ESTRENO, NOTA, RECAUDACION, ESPECTADORES, ExpICAA) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    cursor.execute(sql_insert, (titulo_pelicula.upper(), directores_actores, pais.upper(), duracion, calificacion, genero.upper(), fecha_estreno, nota, recaudacion, espectadores, expIcaa))
-    conn.commit()
-    print("Inserción exitosa.")
-except pyodbc.Error as e:
-    print("Error al insertar en la base de datos:", e)
+        print("Titulo FA: " + titulo_pelicula)
+        print("Titulo Icaa: "+ titulo_icaa)
+        print("Codigo Icaa: " + expIcaa)
+
+        try:
+            with pyodbc.connect(CONN_STR) as conn:
+                with conn.cursor() as cursor:
+                    sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO, DIRECTOR, PAIS, DURACION, CALIFICACION, Genero, ESTRENO, NOTA, RECAUDACION, ESPECTADORES, ExpICAA) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    cursor.execute(sql_insert, (titulo_pelicula.upper(), directores_actores, pais.upper(), duracion, calificacion, genero.upper(), fecha_estreno, nota, recaudacion, espectadores, expIcaa))
+                    conn.commit()
+                    print("Inserción exitosa.")
+        except pyodbc.Error as e:
+            print("Error al insertar en la base de datos:", e)
 
 
-# Cerrar conexión
-cursor.close()
-conn.close()
+
+if __name__ == "__main__":
+    main()
