@@ -7,18 +7,22 @@ import pyodbc
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
+#URLs de las paginas web
+FILMAFFINITY = "https://www.filmaffinity.com/es/film139117.html"
+ICCA = "https://sede.mcu.gob.es/CatalogoICAA/Peliculas/Detalle?Pelicula=218023"
 
-filmaffinity = "https://www.filmaffinity.com/es/film139117.html"
-icca = "https://sede.mcu.gob.es/CatalogoICAA/Peliculas/Detalle?Pelicula=218023"
-
-# CONECTARSE A LA BASE DE DATOS
-# Ruta al archivo de la base de datos Access
-db_path = r'C:\WorkSpace\ImpDataBDCine\BD.mdb'
+# conexion a base de datos
+DB_PATH = r'C:\WorkSpace\ImpDataBDCine\BD.mdb'
 # Conexión
-conn_str = (r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
-            r'DBQ=' + db_path + ';')
-conn = pyodbc.connect(conn_str)
+CONN_STR = (r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'r'DBQ=' + DB_PATH + ';')
+conn = pyodbc.connect(CONN_STR)
 cursor = conn.cursor()
+
+# Header para parecer un navegador web
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+    "Accept": "*/*"
+}
 
 # OBTENER DATOS HTML
 # Eliminar los certificados para la pagina web del ministerio.
@@ -30,15 +34,11 @@ class SSLAdapter(HTTPAdapter):
                                     ssl_version=ssl.PROTOCOL_TLS,
                                     cert_reqs=ssl.CERT_NONE)
 
+
 session = requests.Session()
 session.mount('https://', SSLAdapter())
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
-# Header para parecer un navegador web
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
-    "Accept": "*/*"
-}
 
 # Obtener HTML de filmaffinity
 def obtener_htmlFa(url: str) -> str:
@@ -46,7 +46,7 @@ def obtener_htmlFa(url: str) -> str:
     res.encoding = 'utf-8'
     return res.text
 
-htmlFa = obtener_htmlFa(filmaffinity)
+htmlFa = obtener_htmlFa(FILMAFFINITY)
 
 # Obtener HTML Icca
 def obtener_htmlIcca(url: str) -> str:
@@ -54,7 +54,7 @@ def obtener_htmlIcca(url: str) -> str:
     res.encoding = 'utf-8'
     return res.text
 
-htmlIcca = obtener_htmlIcca(icca)
+htmlIcca = obtener_htmlIcca(ICCA)
 
 #Formatear los datos de recaudación y espectadores para que no haya errores en la base de datos
 def formatear_numero(cantidad):
@@ -146,7 +146,7 @@ if duracion_container:
 else:
     duracion = "1"
     print("Error en la duración o pendiente")
-print(duracion)
+
 # Calificación
 calificacion_container = soupIcca.find(
     'label', class_='mcu-text-details-text-b', string="Film Rating")
