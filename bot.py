@@ -8,8 +8,8 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 
-filmaffinity = "https://www.filmaffinity.com/es/film635719.html"
-icca = "https://sede.mcu.gob.es/CatalogoICAA/en-us/Peliculas/Detalle?Pelicula=2224"
+filmaffinity = "AQUÍ VA EL ENLACE DE https://www.filmaffinity.com/"
+icca = "AQUÍ VA EL ENLACE DE  https://sede.mcu.gob.es/CatalogoICAA/"
 
 # CONECTARSE A LA BASE DE DATOS
 # Ruta al archivo de la base de datos Access
@@ -56,6 +56,16 @@ def obtener_htmlIcca(url: str) -> str:
 
 htmlIcca = obtener_htmlIcca(icca)
 
+#Formatear los datos de recaudación y espectadores para que no haya errores en la base de datos
+def formatear_numero(cantidad):
+    # Reemplazar los puntos por un marcador temporal
+    cantidad_temporal = cantidad.replace('.', 'TEMP')
+    # Reemplazar las comas por puntos
+    cantidad_temporal = cantidad_temporal.replace(',', '.')
+    # Reemplazar el marcador temporal por comas
+    cantidad_final = cantidad_temporal.replace('TEMP', ',')
+    return cantidad_final
+
 # BeautifulSoup
 soupFa = BeautifulSoup(htmlFa, 'lxml')
 soupIcca = BeautifulSoup(htmlIcca, 'lxml')
@@ -96,10 +106,9 @@ if actores_container:
                     for actor in actores_links]
     nombres_actores = " I:" + ", ".join(nombres_actores_sin_formato)
 else:
-    nombres_actores = ""
-    print("Error al obtener actores")
+    nombres_actores = " I: Animación"
+    print("Error al obtener actores o pelicula de animación")
 directores_actores = (nombre_directores) + (nombres_actores)
-
 
 # Fecha estreno
 fecha_estreno_container = soupIcca.find(
@@ -110,7 +119,6 @@ if fecha_estreno_container:
 else:
     fecha_estreno = "01/01/1001"
     print("pendiente de fecha de estreno")
-
 
 # País
 pais_container = soupFa.find(
@@ -178,22 +186,25 @@ if nota_container:
 else:
     nota = "0"
     print("Error en la nota o sin calificación")
+
 # Recaudación
 recaudacion_container = soupIcca.find(
     'label', class_='mcu-text-details-text-b', string="Box Office / Gross Spain: ")
 if recaudacion_container:
     recaudacion = recaudacion_container.find_next(
         'label', class_='custom-simple-label').text
+    recaudacion=formatear_numero(recaudacion)
 else:
     recaudacion = "0 €"
     print("Error en la recauacion o pendiente de estreno")
-print(recaudacion)
+
 # Espectadores
 espectadores_container = soupIcca.find(
     'label', class_='mcu-text-details-text-b', string="Admissions:")
 if espectadores_container:
     espectadores = espectadores_container.find_next(
         'label', class_='custom-simple-label').text
+    espectadores = formatear_numero(espectadores)
 else:
     espectadores = 0
     print("Error en los espectadores o pendiente de estreno")
@@ -206,22 +217,20 @@ if expIcaa_container:
         'label', class_='custom-simple-label').text
 else:
     expIcaa = "ERROR ICCA"
-    print("ERROR ICAA MUCHO OJO")
+    print("ERROR EN CODIGO ICAA")
 print ("Codigo ICAA: " + expIcaa)
-
 
 
 # INSERCION EN LA BASE DE DATOS
 try:
     sql_insert = "INSERT INTO [LISTA DE TITULOS  FESCINAL] (TITULO, DIRECTOR, PAIS, DURACION, CALIFICACION, Genero, ESTRENO, NOTA, RECAUDACION, ESPECTADORES, ExpICAA) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    cursor.execute(sql_insert, (titulo_pelicula, directores_actores, pais, duracion, calificacion, genero, fecha_estreno, nota, recaudacion, espectadores, expIcaa))
+    cursor.execute(sql_insert, (titulo_pelicula.upper(), directores_actores, pais.upper(), duracion, calificacion, genero.upper(), fecha_estreno, nota, recaudacion, espectadores, expIcaa))
     conn.commit()
     print("Inserción exitosa.")
 except pyodbc.Error as e:
     print("Error al insertar en la base de datos:", e)
 
-# Confirmar cambios
-conn.commit()
+
 # Cerrar conexión
 cursor.close()
 conn.close()
